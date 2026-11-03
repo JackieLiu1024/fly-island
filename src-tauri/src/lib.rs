@@ -1,4 +1,6 @@
 mod clipboard_history;
+mod desktop_notifications;
+mod dingtalk_notifications;
 mod media_control;
 mod messenger_activation;
 mod notification_diagnostics;
@@ -1886,8 +1888,8 @@ pub fn run() {
             if let Err(error) = qq_mail::init(app.handle()) {
                 eprintln!("failed to initialize QQ mail: {error}");
             }
-            if let Err(error) = qq_notifications::init(app.handle()) {
-                eprintln!("failed to initialize QQ notifications: {error}");
+            if let Err(error) = desktop_notifications::init(app.handle()) {
+                eprintln!("failed to initialize desktop notifications: {error}");
             }
             if let Err(error) = wechat_reminders::init(app.handle()) {
                 eprintln!("failed to initialize WeChat reminders: {error}");
@@ -1913,12 +1915,18 @@ pub fn run() {
             wechat_reminders::get_wechat_reminder_state,
             wechat_reminders::set_wechat_reminders_enabled,
             wechat_reminders::open_wechat,
-            qq_notifications::get_qq_notification_state,
-            qq_notifications::set_qq_notifications_enabled,
-            qq_notifications::request_qq_notification_access,
-            qq_notifications::open_qq_notification_settings,
-            qq_notifications::clear_qq_notifications,
+            desktop_notifications::get_qq_notification_state,
+            desktop_notifications::set_qq_notifications_enabled,
+            desktop_notifications::request_qq_notification_access,
+            desktop_notifications::open_qq_notification_settings,
+            desktop_notifications::clear_qq_notifications,
             qq_notifications::open_qq,
+            desktop_notifications::get_dingtalk_notification_state,
+            desktop_notifications::set_dingtalk_notifications_enabled,
+            desktop_notifications::request_dingtalk_notification_access,
+            desktop_notifications::open_dingtalk_notification_settings,
+            desktop_notifications::clear_dingtalk_notifications,
+            dingtalk_notifications::open_dingtalk,
             set_island_layout,
             set_island_interaction,
             start_island_drag,

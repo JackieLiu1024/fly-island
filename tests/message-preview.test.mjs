@@ -5,8 +5,10 @@ import { latestMessagePreview, mailBadgeCount, messagePreviewText } from "../src
 test("collapsed previews use source-specific copy and blank-content fallbacks", () => {
   assert.equal(messagePreviewText({ source: "wechat", title: "微信", body: "有新提醒", receivedAt: 0 }), "你收到了一条消息");
   assert.equal(messagePreviewText({ source: "qq", title: " 小林 ", body: " 下午一起开会 ", receivedAt: 0 }), "小林：下午一起开会");
+  assert.equal(messagePreviewText({ source: "dingtalk", title: " 张工 ", body: " 请看一下方案 ", receivedAt: 0 }), "张工：请看一下方案");
   assert.equal(messagePreviewText({ source: "qqMail", title: "发件人", body: " 项目周报 ", receivedAt: 0 }), "项目周报");
   assert.equal(messagePreviewText({ source: "qq", title: " ", body: " ", receivedAt: 0 }), "QQ：收到一条新消息");
+  assert.equal(messagePreviewText({ source: "dingtalk", title: "", body: "", receivedAt: 0 }), "钉钉：收到一条新消息");
   assert.equal(messagePreviewText({ source: "qqMail", title: "", body: "", receivedAt: 0 }), "收到一封新邮件");
 });
 

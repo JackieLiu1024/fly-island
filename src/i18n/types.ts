@@ -1,5 +1,33 @@
 export type LocaleCode = "zh-CN" | "en";
 
+type DesktopNotificationCopy = {
+  desktopOnly: string;
+  receive: string;
+  title: string;
+  pause: string;
+  resume: string;
+  allow: string;
+  allowLabel: string;
+  grant: string;
+  settings: string;
+  retry: string;
+  retryLabel: string;
+  recent: string;
+  open: string;
+  refresh: string;
+  clear: string;
+  list: string;
+  status: {
+    disabled: string;
+    waiting: string;
+    listening: string;
+    permissionDenied: string;
+    permissionRequired: string;
+    error: string;
+  };
+  openNotification: (title: string) => string;
+};
+
 export type Translations = {
   /** Native language name shown in the locale picker. */
   localeLabel: string;
@@ -22,6 +50,8 @@ export type Translations = {
     mail: string;
     qqMail: string;
     qqNotifications: string;
+    dingtalk: string;
+    dingtalkNotifications: string;
     wechatReminders: string;
     newReminder: string;
     newMessage: string;
@@ -31,6 +61,7 @@ export type Translations = {
     newMailLabel: string;
     sourceLabels: {
       qq: string;
+      dingtalk: string;
       wechat: string;
       qqMail: string;
     };
@@ -41,33 +72,8 @@ export type Translations = {
     label: (text: string) => string;
     qqPreview: (title: string, body: string) => string;
   };
-  qq: {
-    desktopOnly: string;
-    receive: string;
-    title: string;
-    pause: string;
-    resume: string;
-    allow: string;
-    allowLabel: string;
-    grant: string;
-    settings: string;
-    retry: string;
-    retryLabel: string;
-    recent: string;
-    open: string;
-    refresh: string;
-    clear: string;
-    list: string;
-    status: {
-      disabled: string;
-      waiting: string;
-      listening: string;
-      permissionDenied: string;
-      permissionRequired: string;
-      error: string;
-    };
-    openNotification: (title: string) => string;
-  };
+  qq: DesktopNotificationCopy;
+  dingtalk: DesktopNotificationCopy;
   wechat: {
     desktopOnly: string;
     receive: string;

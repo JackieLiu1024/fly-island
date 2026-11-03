@@ -1,10 +1,12 @@
 import qqIcon from "./assets/brands/qq.png";
+import dingtalkIcon from "./assets/brands/dingtalk.png";
 import wechatIcon from "./assets/brands/wechat.png";
 import qqMailIcon from "./assets/brands/qq-mail.png";
 import type { MessageSource } from "./messagePreview";
 
 const SOURCE_ICONS: Record<MessageSource, string> = {
   qq: qqIcon,
+  dingtalk: dingtalkIcon,
   wechat: wechatIcon,
   qqMail: qqMailIcon,
 };

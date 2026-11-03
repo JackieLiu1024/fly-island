@@ -1,4 +1,4 @@
-use crate::{qq_notifications, wechat_reminders};
+use crate::{desktop_notifications, wechat_reminders};
 use serde_json::{json, Value};
 use std::{
     fs, thread,
@@ -48,7 +48,10 @@ pub fn start(app: &AppHandle) -> Result<(), String> {
         let mut qq_arrival = false;
         let mut wechat_attention = false;
         loop {
-            let qq = qq_notifications::diagnostic_state().unwrap_or_else(|error| json!({"error": error}));
+            let qq = desktop_notifications::diagnostic_state(
+                desktop_notifications::NotificationSource::Qq,
+            )
+            .unwrap_or_else(|error| json!({"error": error}));
             let wechat = wechat_reminders::diagnostic_state().unwrap_or_else(|error| json!({"error": error}));
             qq_arrival |= qq["itemCount"].as_u64().unwrap_or(0) > 0;
             wechat_attention |= wechat["lastAttentionAt"].as_u64().is_some();

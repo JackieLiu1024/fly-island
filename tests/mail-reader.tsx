@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { mockIPC } from "@tauri-apps/api/mocks";
 import { emit } from "@tauri-apps/api/event";
 import { useQQMail, type MailContent, type MailSnapshot, type QQMailController, sanitizeMailHtml } from "../src/QQMail";
-import { useQQNotifications } from "../src/QQNotifications";
+import { useDingTalkNotifications, useQQNotifications } from "../src/DesktopNotifications";
 import { useWeChatReminders } from "../src/WeChatReminders";
 import { MessagesPanel, messagePanelHeight, type MessageView } from "../src/Messages";
 import "../src/App.css";
@@ -13,7 +13,7 @@ Object.assign(globalThis, { isTauri: true, IS_REACT_ACT_ENVIRONMENT: true });
 const params = new URLSearchParams(location.search);
 const state = params.get("state") ?? "qq";
 const now = Date.now();
-const keys = ["focusd-island-qq-mail-settings", "focusd-island-qq-mail-remote-images", "focusd-island-qq-notifications-enabled", "focusd-island-wechat-reminders-enabled", "focusd-island-qq-notification-access-requested"];
+const keys = ["focusd-island-qq-mail-settings", "focusd-island-qq-mail-remote-images", "focusd-island-qq-notifications-enabled", "focusd-island-dingtalk-notifications-enabled", "focusd-island-wechat-reminders-enabled", "focusd-island-qq-notification-access-requested", "focusd-island-notification-access-requested"];
 const original = keys.map(key => localStorage.getItem(key));
 keys.forEach(key => localStorage.removeItem(key));
 const calls: { command: string; args: Record<string, unknown> }[] = [];
@@ -40,7 +40,9 @@ mockIPC((command, payload) => {
     case "disconnect_qq_mail": snapshot = { ...snapshot, revision: ++revision, email: null, configured: false, enabled: false, status: "disconnected", items: [], unreadCount: null }; return snapshot;
     case "set_qq_mail_enabled": snapshot = { ...snapshot, revision: ++revision, enabled: Boolean(args.enabled), status: args.enabled ? "connected" : "paused" }; return snapshot;
     case "request_qq_notification_access": return "allowed";
+    case "request_dingtalk_notification_access": return "allowed";
     case "set_qq_notifications_enabled": return { revision: ++revision, enabled: args.enabled, status: "listening", error: null, items: state === "empty" || state === "disconnected" ? [] : [{ id: "qq:1", title: "设计讨论组", body: "新版界面已准备好，方便时看一下。", createdAt: now - 30_000 }] };
+    case "set_dingtalk_notifications_enabled": return { revision: ++revision, enabled: args.enabled, status: "listening", error: null, items: state === "empty" || state === "disconnected" ? [] : [{ id: "dingtalk:1", title: "项目组", body: "方案文档已经更新，请查收。", createdAt: now - 20_000 }] };
     case "set_wechat_reminders_enabled": return { revision: ++revision, enabled: args.enabled, status: !args.enabled ? "disabled" : state === "wechatError" ? "error" : "listening", pending: Boolean(args.enabled) && state !== "empty" && state !== "disconnected", lastAttentionAt: !args.enabled || state === "empty" || state === "disconnected" ? null : now - 120_000, error: args.enabled && state === "wechatError" ? "微信提醒连接失败，正在重试。" : null };
     default: return null;
   }
@@ -49,10 +51,11 @@ mockIPC((command, payload) => {
 function Fixture() {
   mail = useQQMail(false);
   const qqNotifications = useQQNotifications(false);
+  const dingtalkNotifications = useDingTalkNotifications(false);
   const wechatReminders = useWeChatReminders(false);
   [view, setView] = useState<MessageView>(["reader", "html", "loading", "error", "auth", "mail", "disconnected"].includes(state) ? "qqMail" : ["wechat", "wechatError"].includes(state) ? "wechat" : "qq");
   const height = messagePanelHeight(view, Boolean(mail.selectedMail));
-  return <section className="message-fixture" style={{ height }}><header className="fixture-heading">fly-island<span>消息</span></header><div className="message-panel"><MessagesPanel source={view} onSourceChange={next => { mail.closeReader(); setView(next); }} qqMail={mail} qqNotifications={qqNotifications} wechatReminders={wechatReminders} /></div></section>;
+  return <section className="message-fixture" style={{ height }}><header className="fixture-heading">fly-island<span>消息</span></header><div className="message-panel"><MessagesPanel source={view} onSourceChange={next => { mail.closeReader(); setView(next); }} qqMail={mail} qqNotifications={qqNotifications} dingtalkNotifications={dingtalkNotifications} wechatReminders={wechatReminders} /></div></section>;
 }
 
 const root = createRoot(document.getElementById("fixture")!);
@@ -73,7 +76,7 @@ const deferred = () => {
 try {
   await act(async () => { root.render(<StrictMode><Fixture /></StrictMode>); });
   if (params.get("run") === "1") {
-    check(view! === "qq" && document.querySelector('.message-sources')?.textContent?.replace(/\d/g, "") === "QQ微信邮箱", "恢复 QQ、微信、邮箱三项品牌导航");
+    check(view! === "qq" && document.querySelector('.message-sources')?.textContent?.replace(/\d/g, "") === "QQ钉钉微信邮箱", "恢复 QQ、钉钉、微信、邮箱四项品牌导航");
     check(!document.querySelector('.wechat-reminder-card, .message-overview') && !document.querySelector('button[aria-label="消息总览"]'), "微信没有被抽成独立卡片或总览");
     check(document.querySelector<HTMLElement>('.message-fixture')?.style.height === "350px", "列表恢复截图中的固定面板高度");
     await click("微信提醒");

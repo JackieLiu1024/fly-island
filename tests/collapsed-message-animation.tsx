@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { mockIPC } from "@tauri-apps/api/mocks";
 import { emit } from "@tauri-apps/api/event";
 import { IslandShell, type IslandMode } from "../src/App";
-import { useQQNotifications } from "../src/QQNotifications";
+import { useDingTalkNotifications, useQQNotifications } from "../src/DesktopNotifications";
 import { useWeChatReminders } from "../src/WeChatReminders";
 import { useQQMail, type MailSnapshot } from "../src/QQMail";
 import type { MessageSource } from "../src/messagePreview";
@@ -15,7 +15,7 @@ async function update(action: () => void | Promise<void>) {
   if (automated) await act(action);
   else await action();
 }
-const keys = ["focusd-island-qq-notifications-enabled", "focusd-island-wechat-reminders-enabled", "focusd-island-qq-notification-access-requested", "focusd-island-qq-mail-settings"];
+const keys = ["focusd-island-qq-notifications-enabled", "focusd-island-dingtalk-notifications-enabled", "focusd-island-wechat-reminders-enabled", "focusd-island-qq-notification-access-requested", "focusd-island-notification-access-requested", "focusd-island-qq-mail-settings"];
 const originals = keys.map((key) => localStorage.getItem(key));
 keys.forEach((key) => localStorage.removeItem(key));
 function restoreStorage() {
@@ -33,7 +33,11 @@ mockIPC((command, payload) => {
   commands.push(command);
   const args = (payload ?? {}) as Record<string, unknown>;
   if (command === "request_qq_notification_access") return "allowed";
+  if (command === "request_dingtalk_notification_access") return "allowed";
   if (command === "set_qq_notifications_enabled") return {
+    revision: ++revision, enabled: args.enabled, status: "listening", items: [], error: null,
+  };
+  if (command === "set_dingtalk_notifications_enabled") return {
     revision: ++revision, enabled: args.enabled, status: "listening", items: [], error: null,
   };
   if (command === "set_wechat_reminders_enabled") return {
@@ -62,12 +66,13 @@ function Fixture() {
   const [pixel, setPixel] = useState(false);
   const canPreview = mode === "collapsed" && !tucked;
   const qq = useQQNotifications(canPreview);
+  const dingtalk = useDingTalkNotifications(canPreview);
   const wechat = useWeChatReminders(canPreview);
   const qqMail = useQQMail(canPreview);
   changeMode = setMode; changeTucked = setTucked; changeCount = setCount; changeTask = setTask;
   changeWidth = setWidth; changeTitle = setTitle; changeFont = setPixel;
   return <div className={`stage${pixel ? " stage--font-pixel" : ""}`} style={{ "--collapsed-island-width": `${width}px` } as CSSProperties}>
-    <IslandShell qqNotifications={qq} wechatReminders={wechat} qqMail={qqMail}
+    <IslandShell qqNotifications={qq} dingtalkNotifications={dingtalk} wechatReminders={wechat} qqMail={qqMail}
       mode={mode} page="todo" isTucked={tucked} isDetached={true} showTitle={title}
       showCollapsedText={true} collapsedTaskTitle={task ?? `剩余${count}个待办`}
       appearanceMode="classic" nativeGlassState="disabled" agentVisualState="idle" agentStatusLabel="AI Agent 空闲或已完成"
@@ -88,6 +93,9 @@ async function notify(source: MessageSource, long = false, visible = true) {
     });
     if (source === "qq") await emit("qq-notifications-changed", {
       snapshot: { revision: ++revision, enabled: true, status: "listening", items: [{ id: `qq-${revision}`, title: long ? "这是一位名字特别特别长的好友" : "小林", body: long ? "明天下午三点一起讨论新项目的设计方案，记得带上之前整理的资料。" : "下午一起开会吗？", createdAt: receivedAt }], error: null }, newestId: `qq-${revision}`, windowVisible: visible,
+    });
+    if (source === "dingtalk") await emit("dingtalk-notifications-changed", {
+      snapshot: { revision: ++revision, enabled: true, status: "listening", items: [{ id: `dingtalk-${revision}`, title: long ? "这是一位名字特别特别长的同事" : "张工", body: long ? "明天下午三点一起讨论新项目的设计方案，记得带上之前整理的资料。" : "方案文档已经更新，请查收。", createdAt: receivedAt }], error: null }, newestId: `dingtalk-${revision}`, windowVisible: visible,
     });
     if (source === "qqMail") {
       mail = { ...mail, revision: ++revision, unreadCount: 1, items: [{ id: `mail-${revision}`, uid: revision, sender: "项目组", subject: long ? "本周项目进度和下阶段设计评审安排，请查收附件中的完整说明" : "本周项目进度已更新", unread: true, receivedAt }] };
@@ -198,7 +206,7 @@ async function runChecks() {
 await act(async () => { createRoot(document.getElementById("fixture")!).render(<StrictMode><Fixture /></StrictMode>); });
 if (!automated) Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false });
 for (const [label, action] of [
-  ["微信消息", () => notify("wechat")], ["QQ 消息", () => notify("qq")], ["邮箱消息", () => notify("qqMail")],
+  ["微信消息", () => notify("wechat")], ["QQ 消息", () => notify("qq")], ["钉钉消息", () => notify("dingtalk")], ["邮箱消息", () => notify("qqMail")],
   ["长 QQ 消息", () => notify("qq", true)], ["340px", () => update(async () => changeWidth(340))],
   ["像素主题", () => update(async () => changeFont(true))], ["系统主题", () => update(async () => changeFont(false))],
   ["280px", () => update(async () => changeWidth(280))], ["自动检查", () => { location.search = "?test=1"; }],
@@ -214,5 +222,5 @@ if (params.has("test")) await runChecks();
 else {
   results.textContent = "点击按钮查看真实收起态的消息动画；通知约 5 秒后自动恢复。";
   const state = params.get("state");
-  if (state === "wechat" || state === "qq" || state === "qqMail") await notify(state);
+  if (state === "wechat" || state === "qq" || state === "dingtalk" || state === "qqMail") await notify(state);
 }

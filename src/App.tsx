@@ -47,10 +47,13 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import {
+  DingTalkNotificationControls,
   QQNotificationControls,
+  useDingTalkNotifications,
   useQQNotifications,
+  type DingTalkNotificationsController,
   type QQNotificationsController,
-} from "./QQNotifications";
+} from "./DesktopNotifications";
 import {
   WeChatReminderControls,
   useWeChatReminders,
@@ -253,6 +256,7 @@ type IslandPreset = {
 type IslandShellProps = {
   qqMail: QQMailController;
   qqNotifications: QQNotificationsController;
+  dingtalkNotifications: DingTalkNotificationsController;
   wechatReminders: WeChatRemindersController;
   onOpenMessages: (source: MessageSource) => void;
   mode: IslandMode;
@@ -1091,6 +1095,7 @@ function createTodoId() {
 export function IslandShell({
   qqMail,
   qqNotifications,
+  dingtalkNotifications,
   wechatReminders,
   onOpenMessages,
   mode,
@@ -1129,16 +1134,19 @@ export function IslandShell({
   const [isPreparing, setIsPreparing] = useState(isTauri);
   const qqPreview = qqNotifications.preview;
   const qqNotificationCount = qqNotifications.snapshot.items.length;
+  const dingtalkPreview = dingtalkNotifications.preview;
+  const dingtalkNotificationCount = dingtalkNotifications.snapshot.items.length;
   const wechatPending = wechatReminders.snapshot.pending;
   const wechatPreviewAt = wechatReminders.previewReceivedAt;
   const [latestPreviewAt, setLatestPreviewAt] = useState(0);
   const preview = latestMessagePreview([
     qqPreview ? { ...qqPreview, source: "qq", receivedAt: qqNotifications.previewReceivedAt ?? 0 } : null,
+    dingtalkPreview ? { ...dingtalkPreview, source: "dingtalk", receivedAt: dingtalkNotifications.previewReceivedAt ?? 0 } : null,
     wechatPreviewAt !== null ? { source: "wechat", title: t.messages.wechat, body: t.messages.newReminder, receivedAt: wechatPreviewAt } : null,
     qqMail.preview ? { source: "qqMail", title: qqMail.preview.sender, body: qqMail.preview.subject, receivedAt: qqMail.previewReceivedAt ?? 0 } : null,
   ], latestPreviewAt);
   if (preview && preview.receivedAt > latestPreviewAt) setLatestPreviewAt(preview.receivedAt);
-  const messageBadgeLabel = t.messages.badge(qqNotificationCount, wechatPending);
+  const messageBadgeLabel = t.messages.badge(qqNotificationCount + dingtalkNotificationCount, wechatPending);
   const isLiquidGlass = appearanceMode === "liquidGlass";
   const isMusicPlaying = mediaState.playbackStatus === "playing";
   const className = [
@@ -1358,7 +1366,11 @@ export function IslandShell({
                     void qqMail.readMail(qqMail.preview);
                     return;
                   }
-                  const open = preview.source === "qq" ? qqNotifications.openQQ : wechatReminders.openWeChat;
+                  const open = preview.source === "qq"
+                    ? qqNotifications.openSource
+                    : preview.source === "dingtalk"
+                      ? dingtalkNotifications.openSource
+                      : wechatReminders.openWeChat;
                   void open().then((opened) => {
                     if (opened === false) onOpenMessages(preview.source);
                   });
@@ -1492,9 +1504,9 @@ export function IslandShell({
             />
 
             <div className="window-actions">
-              <button className={`icon-button island-message-button${page === "qq" ? " island-message-button--active" : ""}`} type="button" aria-label={t.messages.label(messageBadgeLabel)} aria-pressed={page === "qq"} title={t.messages.title} onClick={() => onOpenMessages(wechatPending ? "wechat" : "qq")}>
+              <button className={`icon-button island-message-button${page === "qq" ? " island-message-button--active" : ""}`} type="button" aria-label={t.messages.label(messageBadgeLabel)} aria-pressed={page === "qq"} title={t.messages.title} onClick={() => onOpenMessages(wechatPending ? "wechat" : qqNotificationCount > 0 ? "qq" : dingtalkNotificationCount > 0 ? "dingtalk" : "qq")}>
                 <Bell size={17} strokeWidth={1.8} />
-                {(qqNotificationCount > 0 || wechatPending) && <span className="island-message-button__dot" aria-hidden="true" />}
+                {(qqNotificationCount > 0 || dingtalkNotificationCount > 0 || wechatPending) && <span className="island-message-button__dot" aria-hidden="true" />}
               </button>
               <button
                 className="icon-button island-translate-button"
@@ -1816,6 +1828,7 @@ function LayoutEditor({
   locale,
   settings,
   qqNotifications,
+  dingtalkNotifications,
   wechatReminders,
   clipboardSettings,
   saveDirectoryDraft,
@@ -1847,6 +1860,7 @@ function LayoutEditor({
   locale: LocaleCode;
   settings: IslandSettings;
   qqNotifications: QQNotificationsController;
+  dingtalkNotifications: DingTalkNotificationsController;
   wechatReminders: WeChatRemindersController;
   clipboardSettings: ClipboardHistorySettings;
   saveDirectoryDraft: string;
@@ -2144,6 +2158,7 @@ function LayoutEditor({
       <section className="settings-section settings-section--messages">
         <div className="settings-section__header"><span>{t.settings.messageReception}</span></div>
         <QQNotificationControls controller={qqNotifications} />
+        <DingTalkNotificationControls controller={dingtalkNotifications} />
         <WeChatReminderControls controller={wechatReminders} />
       </section>
 
@@ -4007,6 +4022,7 @@ function IslandApp({
   const [mode, setMode] = useState<IslandMode>("collapsed");
   const [isTucked, setIsTucked] = useState(false);
   const qqNotifications = useQQNotifications(mode === "collapsed" && !isTucked);
+  const dingtalkNotifications = useDingTalkNotifications(mode === "collapsed" && !isTucked);
   const wechatReminders = useWeChatReminders(mode === "collapsed" && !isTucked);
   const qqMail = useQQMail(mode === "collapsed" && !isTucked);
   const [messageSource, setMessageSource] = useState<MessageView>("qq");
@@ -4097,7 +4113,7 @@ function IslandApp({
     settings.rotateTodos,
     settings.todoRotationSeconds,
     mode !== "collapsed" || isTucked || !settings.showCollapsedText ||
-      Boolean(qqNotifications.preview || wechatReminders.previewReceivedAt !== null || qqMail.preview),
+      Boolean(qqNotifications.preview || dingtalkNotifications.preview || wechatReminders.previewReceivedAt !== null || qqMail.preview),
   );
   const collapsedTaskTitle = useMemo(() => {
     const activeTodo = todos.find(
@@ -5657,6 +5673,7 @@ function IslandApp({
       <IslandShell
         qqMail={qqMail}
         qqNotifications={qqNotifications}
+        dingtalkNotifications={dingtalkNotifications}
         wechatReminders={wechatReminders}
         onOpenMessages={openMessages}
         mode={mode}
@@ -5684,7 +5701,7 @@ function IslandApp({
       >
         {page === "qq" && (
           <div className="message-panel">
-            <MessagesPanel qqMail={qqMail} qqNotifications={qqNotifications} wechatReminders={wechatReminders} source={messageSource} onSourceChange={openMessages} />
+            <MessagesPanel qqMail={qqMail} qqNotifications={qqNotifications} dingtalkNotifications={dingtalkNotifications} wechatReminders={wechatReminders} source={messageSource} onSourceChange={openMessages} />
           </div>
         )}
         {page === "layout" && (
@@ -5692,6 +5709,7 @@ function IslandApp({
             locale={locale}
             settings={settings}
             qqNotifications={qqNotifications}
+            dingtalkNotifications={dingtalkNotifications}
             wechatReminders={wechatReminders}
             clipboardSettings={clipboardHistory.settings}
             saveDirectoryDraft={saveDirectoryDraft}

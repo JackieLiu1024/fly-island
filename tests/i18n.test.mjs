@@ -66,6 +66,7 @@ test("message fallbacks follow the interface language and preserve user content"
   assert.equal(messagePreviewText({ ...empty, source: "wechat" }, TRANSLATIONS.en.messages), "You received a message");
   assert.equal(messagePreviewText({ ...empty, source: "qqMail" }, TRANSLATIONS.en.messages), "New email");
   assert.equal(messagePreviewText({ ...empty, source: "qq" }, TRANSLATIONS.en.messages), "QQ: New message");
+  assert.equal(messagePreviewText({ ...empty, source: "dingtalk" }, TRANSLATIONS.en.messages), "DingTalk: New message");
   assert.equal(messagePreviewText({ ...empty, source: "qqMail", body: " 项目周报 " }, TRANSLATIONS.en.messages), "项目周报");
 });
 

@@ -17,9 +17,9 @@ function MessageContent({ preview }: { preview: MessagePreview }) {
   const t = useTranslation();
   return <>
     <MessageSourceIcon source={preview.source} size={18} />
-    {preview.source === "qq" ? (
+    {preview.source === "qq" || preview.source === "dingtalk" ? (
       <span className="island-message-preview__text">
-        <strong className="island-message-preview__sender">{preview.title.trim() || "QQ"}</strong>
+        <strong className="island-message-preview__sender">{preview.title.trim() || t.messages.sourceLabels[preview.source]}</strong>
         <span className="island-message-preview__separator" aria-hidden="true">·</span>
         <span className="island-message-preview__body">{preview.body.trim() || t.messages.newMessage}</span>
       </span>

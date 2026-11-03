@@ -76,7 +76,7 @@ impl NotificationSource {
                     .rsplit(['\\', '/'])
                     .next()
                     .unwrap_or(normalized.as_str());
-                tail.contains("dingtalk") || tail.contains("dingding")
+                tail.contains("dingtalk") || tail.contains("dingding") || tail.contains("jerehtalk")
             }
         }
     }
@@ -751,6 +751,8 @@ mod tests {
             "DingTalk",
             "DingTalk.exe",
             "com.alibaba.DingTalk",
+            "ali.dingtalk.JerehTalk",
+            "JerehTalk.exe",
             "C:\\Program Files\\DingTalk\\DingTalk.exe",
         ] {
             assert!(source.matches_app_id(app_id), "{app_id} must match");

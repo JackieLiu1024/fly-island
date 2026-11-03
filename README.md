@@ -59,7 +59,7 @@ fly-island 把分散在不同窗口中的高频操作放到一个可折叠、可
 
 ### 功能设置
 
-- **QQ、钉钉和微信提醒**：首次默认开启。QQ 和钉钉都需要 Windows 通知访问权限、客户端已登录并启用系统通知；微信需要电脑版保持登录并发出任务栏提醒。三个来源可分别在「设置 → 消息接收」或消息页面关闭。参见 [QQ 通知说明](docs/qq-notification-compatibility.md)和[微信提醒说明](docs/wechat-reminder-compatibility.md)。
+- **QQ、钉钉和微信提醒**：首次默认开启。QQ 和钉钉都需要 Windows 通知访问权限、客户端已登录并启用系统通知；微信需要电脑版保持登录并发出任务栏提醒。三个来源可分别在「设置 → 消息接收」或消息页面关闭。兼容企业内网部署的钉钉客户端（如 JerehTalk）。参见 [QQ 通知说明](docs/qq-notification-compatibility.md)和[微信提醒说明](docs/wechat-reminder-compatibility.md)。
 
 - **QQ 邮箱**：在邮箱设置中开启 IMAP 并生成授权码，然后在消息页面填写 `@qq.com` 地址和授权码（不是 QQ 登录密码）。凭据保存在 Windows 凭据管理器。支持手动刷新、暂停接收和断开连接；首次同步不提醒历史邮件。详见 [QQ 邮箱接入说明](docs/qq-mail.md)。
 

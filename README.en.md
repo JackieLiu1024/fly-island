@@ -57,7 +57,7 @@ Expand the island to switch between tasks, music, clipboard, settings, and messa
 
 ### Feature setup
 
-- **QQ, DingTalk, and WeChat reminders** are enabled by default. QQ and DingTalk need Windows notification access, and each client must be signed in with system notifications enabled. WeChat must be running and issue a taskbar-attention request. Pause any source in **Settings → Message reception** or from the message panel. See the [QQ notification guide (Chinese)](docs/qq-notification-compatibility.md) and [WeChat reminder guide (Chinese)](docs/wechat-reminder-compatibility.md).
+- **QQ, DingTalk, and WeChat reminders** are enabled by default. QQ and DingTalk need Windows notification access, and each client must be signed in with system notifications enabled. WeChat must be running and issue a taskbar-attention request. Pause any source in **Settings → Message reception** or from the message panel. Enterprise DingTalk deployments such as JerehTalk are supported. See the [QQ notification guide (Chinese)](docs/qq-notification-compatibility.md) and [WeChat reminder guide (Chinese)](docs/wechat-reminder-compatibility.md).
 
 - **QQ Mail** connects from the message panel. Enable IMAP in QQ Mail settings, generate an authorization code, then enter your `@qq.com` address and that code (not your QQ login password). The code is stored in Windows Credential Manager. You can refresh, pause receiving, or disconnect to delete the code. Initial sync does not replay old mail. See the [QQ Mail setup guide (Chinese)](docs/qq-mail.md).
 

@@ -32,7 +32,7 @@ fn wide(value: &str) -> Vec<u16> {
 fn has_dingtalk_executable_name(path: &Path) -> bool {
     path.file_name().is_some_and(|name| {
         let name = name.to_string_lossy().to_ascii_lowercase();
-        name.contains("dingtalk") || name.contains("dingding")
+        name.contains("dingtalk") || name.contains("dingding") || name.contains("jerehtalk")
     })
 }
 
@@ -42,7 +42,12 @@ fn is_dingtalk_executable(path: &Path) -> bool {
 
 fn app_paths_executable() -> Option<PathBuf> {
     for root in [HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
-        for executable in ["DingTalk.exe", "DingtalkLauncher.exe", "DingDing.exe"] {
+        for executable in [
+            "JerehTalk.exe",
+            "DingTalk.exe",
+            "DingtalkLauncher.exe",
+            "DingDing.exe",
+        ] {
             let key = wide(&format!(
                 "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\{executable}"
             ));
@@ -78,6 +83,9 @@ fn common_location_executable() -> Option<PathBuf> {
             continue;
         };
         for relative in [
+            "JerehTalk/main/current/JerehTalk.exe",
+            "JerehTalk/JerehTalk.exe",
+            "JerehTalk/DingtalkLauncher.exe",
             "DingTalk/DingTalk.exe",
             "DingTalk/DingtalkLauncher.exe",
             "DingDing/DingtalkLauncher.exe",
@@ -93,8 +101,8 @@ fn common_location_executable() -> Option<PathBuf> {
 }
 
 fn dingtalk_executable() -> Result<PathBuf, String> {
-    app_paths_executable()
-        .or_else(common_location_executable)
+    common_location_executable()
+        .or_else(app_paths_executable)
         .ok_or_else(|| "未找到钉钉安装路径，请确认已安装 Windows 版钉钉。".into())
 }
 
@@ -245,6 +253,9 @@ mod tests {
         )));
         assert!(has_dingtalk_executable_name(Path::new(
             "C:\\DingDing\\DingtalkLauncher.exe"
+        )));
+        assert!(has_dingtalk_executable_name(Path::new(
+            "C:\\Program Files (x86)\\JerehTalk\\main\\current\\JerehTalk.exe"
         )));
         assert!(!has_dingtalk_executable_name(Path::new(
             "C:\\Program Files\\Other\\Other.exe"
